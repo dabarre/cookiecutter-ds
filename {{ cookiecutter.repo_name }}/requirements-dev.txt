@@ -1,0 +1,11 @@
+-r requirements.txt
+-e .
+
+black
+flake8
+isort
+pipreqs
+pytest
+python-dotenv
+setuptools
+wheel

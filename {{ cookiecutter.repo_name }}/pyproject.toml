@@ -1,0 +1,14 @@
+[tool.black]
+line-length = 99
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+)/
+'''
+
+[tool.isort]
+profile = "google"
+src_paths = ["{{ cookiecutter.module_name }}", "test"]
