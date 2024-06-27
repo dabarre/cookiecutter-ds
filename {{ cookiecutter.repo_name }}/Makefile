@@ -1,5 +1,3 @@
-.PHONY: clean data lint format {% if cookiecutter.dependency_file != 'none' %}requirements{% endif %} {% if cookiecutter.dependency_file != 'none' %}sync_data_down sync_data_up{% endif %}
-
 #################################################################################
 # GLOBALS                                                                       #
 #################################################################################
@@ -18,6 +16,7 @@ MLFLOW_DIR = to_set
 
 {% if cookiecutter.dependency_file != 'none' %}
 ## Install python dependencies for production
+.PHONY requirements
 requirements:
 	{% if "requirements.txt" == cookiecutter.dependency_file -%}
 	$(PYTHON_INTERPRETER) -m pip install --upgrade pip
@@ -30,19 +29,23 @@ requirements:
 {% endif %}
 
 ## Install python dependencies for development
-requirements_dev: requirements
+.PHONY requirements-dev
+requirements-dev: requirements
 	$(PYTHON_INTERPRETER) -m pip install --upgrade -r requirements_dev.txt
 
-
-save_requirements:
+## Save python dependencies for production
+.PHONY save-requirements
+save-requirements:
 	pipreqs $(PROJECT_DIR) --force
 
 ## Reinstall local module
+.PHONY reinstall
 reinstall:
 	rm -rf $(MODULE_NAME).egg-info
 	pip install -e .
 
 ## Delete all compiled Python files
+.PHONY clean
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -path "*/__pycache__/*" -delete
@@ -51,35 +54,43 @@ clean:
 
 
 ## Launch api
+.PHONY api
 api:
 	@echo Write command to launch api
 
 ## Launch MLFlow server
-mlflow_server:
+.PHONY mlflow-server
+mlflow-server:
 # mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri $(MLFLOW_DIR) --artifacts-destination $(MLFLOW_DIR)
 	@echo Write command to launch mlflow server
 
 ## Test code with pytest
+.PHONY check
 check:
 	pytest test
 
 ## Lint code and format it
+.PHONY lint
 lint: format lint
 
 ## Format source code and sort imports
+.PHONY format
 format: isort black
 
 # Lint code with flake8
+.PHONY flake8
 flake8:
 	flake8 {{ cookiecutter.module_name }}
 	falke8 test
 
 # Format code with black
+.PHONY black
 black:
 	black --config pyproject.toml {{ cookiecutter.module_name }}
 	black --config pyproject.toml test
 
 # Sort imports with isort
+.PHONY isort
 isort:
 	isort --settings-path pyproject.toml {{ cookiecutter.module_name }}
 	isort --settings-path pyproject.toml test
@@ -88,6 +99,7 @@ isort:
 
 {% if not cookiecutter.dataset_storage.none %}
 ## Download Data from storage system
+.PHONY sync_data_down
 sync_data_down:
 	{% if cookiecutter.dataset_storage.s3 -%}
 	aws s3 sync s3://{{ cookiecutter.dataset_storage.s3.bucket }}/data/\
@@ -100,6 +112,7 @@ sync_data_down:
 	{% endif %}
 
 ## Upload Data to storage system
+.PHONY sync_data_up
 sync_data_up:
 	{% if cookiecutter.dataset_storage.s3 -%}
 	aws s3 sync s3://{{ cookiecutter.dataset_storage.s3.bucket }}/data/ data/\
@@ -114,6 +127,7 @@ sync_data_up:
 
 {% if cookiecutter.environment_manager != 'none' %}
 ## Set up python interpreter environment
+.PHONY create_environment
 create_environment:
 	{% if cookiecutter.environment_manager == 'conda' -%}
 	{% if cookiecutter.dependency_file != 'environment.yml' %}
@@ -140,6 +154,7 @@ create_environment:
 #################################################################################
 
 ## Make Dataset
+.PHONY data
 data: requirements
 	$(PYTHON_INTERPRETER) {{ cookiecutter.module_name }}/data/make_dataset.py
 
@@ -149,57 +164,14 @@ data: requirements
 
 .DEFAULT_GOAL := help
 
-# Inspired by <http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html>
-# sed script explained:
-# /^##/:
-# 	* save line in hold space
-# 	* purge line
-# 	* Loop:
-# 		* append newline + line to hold space
-# 		* go to next line
-# 		* if line starts with doc comment, strip comment character off and loop
-# 	* remove target prerequisites
-# 	* append hold space (+ newline) to line
-# 	* replace newline plus comments by `---`
-# 	* print line
-# Separate expressions are necessary because labels cannot be delimited by
-# semicolon; see <http://stackoverflow.com/a/11799865/1968>
-.PHONY: help
+define PRINT_HELP_PYSCRIPT
+import re, sys; \
+lines = '\n'.join([line for line in sys.stdin]); \
+matches = re.findall(r'\n## (.*)\n[\s\S]+?\n([a-zA-Z_-]+):', lines); \
+print('Available rules:\n'); \
+print('\n'.join(['{:25}{}'.format(*reversed(match)) for match in matches]))
+endef
+export PRINT_HELP_PYSCRIPT
+
 help:
-	@echo "$$(tput bold)Available rules:$$(tput sgr0)"
-	@echo
-	@sed -n -e "/^## / { \
-		h; \
-		s/.*//; \
-		:doc" \
-		-e "H; \
-		n; \
-		s/^## //; \
-		t doc" \
-		-e "s/:.*//; \
-		G; \
-		s/\\n## /---/; \
-		s/\\n/ /g; \
-		p; \
-	}" ${MAKEFILE_LIST} \
-	| LC_ALL='C' sort --ignore-case \
-	| awk -F '---' \
-		-v ncol=$$(tput cols) \
-		-v indent=19 \
-		-v col_on="$$(tput setaf 6)" \
-		-v col_off="$$(tput sgr0)" \
-	'{ \
-		printf "%s%*s%s ", col_on, -indent, $$1, col_off; \
-		n = split($$2, words, " "); \
-		line_length = ncol - indent; \
-		for (i = 1; i <= n; i++) { \
-			line_length -= length(words[i]) + 1; \
-			if (line_length <= 0) { \
-				line_length = ncol - indent - length(words[i]) - 1; \
-				printf "\n%*s ", -indent, " "; \
-			} \
-			printf "%s ", words[i]; \
-		} \
-		printf "\n"; \
-	}' \
-	| more $(shell test $(shell uname) = Darwin && echo '--no-init --raw-control-chars')
+	@python -c "${PRINT_HELP_PYSCRIPT}" < $(MAKEFILE_LIST)
