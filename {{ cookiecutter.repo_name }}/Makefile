@@ -16,7 +16,7 @@ MLFLOW_DIR = to_set
 
 {% if cookiecutter.dependency_file != 'none' %}
 ## Install python dependencies for production
-.PHONY requirements
+.PHONY: requirements
 requirements:
 	{% if "requirements.txt" == cookiecutter.dependency_file -%}
 	$(PYTHON_INTERPRETER) -m pip install --upgrade pip
@@ -29,23 +29,23 @@ requirements:
 {% endif %}
 
 ## Install python dependencies for development
-.PHONY requirements-dev
+.PHONY: requirements-dev
 requirements-dev: requirements
 	$(PYTHON_INTERPRETER) -m pip install --upgrade -r requirements_dev.txt
 
 ## Save python dependencies for production
-.PHONY save-requirements
+.PHONY: save-requirements
 save-requirements:
 	pipreqs $(PROJECT_DIR) --force
 
 ## Reinstall local module
-.PHONY reinstall
+.PHONY: reinstall
 reinstall:
 	rm -rf $(MODULE_NAME).egg-info
 	pip install -e .
 
 ## Delete all compiled Python files
-.PHONY clean
+.PHONY: clean
 clean:
 	find . -type f -name "*.py[co]" -delete
 	find . -path "*/__pycache__/*" -delete
@@ -54,43 +54,43 @@ clean:
 
 
 ## Launch api
-.PHONY api
+.PHONY: api
 api:
 	@echo Write command to launch api
 
 ## Launch MLFlow server
-.PHONY mlflow-server
+.PHONY: mlflow-server
 mlflow-server:
 # mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri $(MLFLOW_DIR) --artifacts-destination $(MLFLOW_DIR)
 	@echo Write command to launch mlflow server
 
 ## Test code with pytest
-.PHONY check
+.PHONY: check
 check:
 	pytest test
 
 ## Lint code and format it
-.PHONY lint
+.PHONY: lint
 lint: format lint
 
 ## Format source code and sort imports
-.PHONY format
+.PHONY: format
 format: isort black
 
 # Lint code with flake8
-.PHONY flake8
+.PHONY: flake8
 flake8:
 	flake8 {{ cookiecutter.module_name }}
 	falke8 test
 
 # Format code with black
-.PHONY black
+.PHONY: black
 black:
 	black --config pyproject.toml {{ cookiecutter.module_name }}
 	black --config pyproject.toml test
 
 # Sort imports with isort
-.PHONY isort
+.PHONY: isort
 isort:
 	isort --settings-path pyproject.toml {{ cookiecutter.module_name }}
 	isort --settings-path pyproject.toml test
@@ -99,7 +99,7 @@ isort:
 
 {% if not cookiecutter.dataset_storage.none %}
 ## Download Data from storage system
-.PHONY sync_data_down
+.PHONY: sync_data_down
 sync_data_down:
 	{% if cookiecutter.dataset_storage.s3 -%}
 	aws s3 sync s3://{{ cookiecutter.dataset_storage.s3.bucket }}/data/\
@@ -112,7 +112,7 @@ sync_data_down:
 	{% endif %}
 
 ## Upload Data to storage system
-.PHONY sync_data_up
+.PHONY: sync_data_up
 sync_data_up:
 	{% if cookiecutter.dataset_storage.s3 -%}
 	aws s3 sync s3://{{ cookiecutter.dataset_storage.s3.bucket }}/data/ data/\
@@ -127,7 +127,7 @@ sync_data_up:
 
 {% if cookiecutter.environment_manager != 'none' %}
 ## Set up python interpreter environment
-.PHONY create_environment
+.PHONY: create_environment
 create_environment:
 	{% if cookiecutter.environment_manager == 'conda' -%}
 	{% if cookiecutter.dependency_file != 'environment.yml' %}
@@ -154,7 +154,7 @@ create_environment:
 #################################################################################
 
 ## Make Dataset
-.PHONY data
+.PHONY: data
 data: requirements
 	$(PYTHON_INTERPRETER) {{ cookiecutter.module_name }}/data/make_dataset.py
 
