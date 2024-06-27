@@ -31,7 +31,7 @@ conda install cookiecutter
 
 2. Create a new project:
 ``` bash
-cookiecutter https://gitlab.com/nutai/id/tpl/machine-learning/cookiecutter-ds-nutai
+cookiecutter https://github.com/dabarre/cookiecutter-ds/
 ```
 
 Then the cookiecutter command will ask the following values about the project:
