@@ -8,7 +8,8 @@ PYTHON_VERSION = {{ cookiecutter.python_version_number }}
 PYTHON_INTERPRETER = {{ cookiecutter.python_interpreter }}
 MLFLOW_DIR = to_set
 {% if cookiecutter.environment_manager != 'none' %}PROJECT_VENV_NAME = venv{% endif %}
-
+MODULE_NAME = {{ cookiecutter.module_name }}
+MODULE_TEST = tests
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -80,20 +81,20 @@ format: isort black
 # Lint code with flake8
 .PHONY: flake8
 flake8:
-	flake8 {{ cookiecutter.module_name }}
-	falke8 test
+	flake8 $(MODULE_NAME)
+	falke8 $(MODULE_TEST)
 
 # Format code with black
 .PHONY: black
 black:
-	black --config pyproject.toml {{ cookiecutter.module_name }}
-	black --config pyproject.toml test
+	black --config pyproject.toml $(MODULE_NAME)
+	black --config pyproject.toml $(MODULE_TEST)
 
 # Sort imports with isort
 .PHONY: isort
 isort:
-	isort --settings-path pyproject.toml {{ cookiecutter.module_name }}
-	isort --settings-path pyproject.toml test
+	isort --settings-path pyproject.toml $(MODULE_NAME)
+	isort --settings-path pyproject.toml $(MODULE_TEST)
 
 
 
