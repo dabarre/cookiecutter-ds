@@ -71,7 +71,7 @@ check:
 
 ## Lint code and format it
 .PHONY: lint
-lint: format lint
+lint: format flake8
 
 ## Format source code and sort imports
 .PHONY: format
